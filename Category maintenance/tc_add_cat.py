@@ -471,41 +471,70 @@ class TestTC48:
         login(self.driver, self.wait)
     def teardown_method(self, method):
         self.driver.quit()
-    def test_TC48(self):
-        # Truy cập trực tiếp trang quản lý danh mục
+    def test_tC48(self):
+        # ======================
+        # TC48: Thêm danh mục với tên vượt quá độ dài cho phép
+        # ======================
+
+        # Mở trang quản lý danh mục
         self.driver.get("http://hauiproj.somee.com/Admin/Quanlydanhmuc.aspx")
         time.sleep(1)
 
         # Nhập ID hợp lệ
         txt_id = self.wait.until(
-            EC.presence_of_element_located((By.ID, "ContentPlaceHolder1_txtID"))
+            EC.presence_of_element_located(
+                (By.ID, "ContentPlaceHolder1_txtID")
+            )
         )
         txt_id.clear()
         txt_id.send_keys("24")
         time.sleep(1)
 
-        # Nhập tên danh mục vượt quá độ dài cho phép
-        txt_name = self.driver.find_element(
-            By.ID, "ContentPlaceHolder1_txtTenDM"
+        # Nhập tên danh mục vượt quá số ký tự cho phép
+        txt_name = self.wait.until(
+            EC.presence_of_element_located(
+                (By.ID, "ContentPlaceHolder1_txtTenDM")
+            )
         )
         txt_name.clear()
         txt_name.send_keys(
-            "Danh mục tổng hợp các bài viết hướng dẫn lập trình và phân tích dữ liệu nâng cao"
+            "Danh mục tổng hợp các bài viết hướng dẫn lập trình "
+            "và phân tích dữ liệu nâng cao"
         )
         time.sleep(1)
 
+        # Click nút thêm
         self.driver.find_element(
             By.ID, "ContentPlaceHolder1_LinkButton1"
         ).click()
         time.sleep(1)
 
-        err = self.wait.until(
-            EC.visibility_of_element_located(
-                (By.ID, "ContentPlaceHolder1_lblError")
-            )
-        ).text.strip()
+        # ======================
+        # KIỂM TRA KẾT QUẢ
+        # ======================
+        expected_msg = "Số từ vượt quá ký tự"
 
-        assert "String or binary data would be truncated" in err
+        try:
+            actual_msg = WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(
+                    (By.ID, "ContentPlaceHolder1_lblError")
+                )
+            ).text.strip()
+
+            if expected_msg not in actual_msg:
+                pytest.fail(
+                    "TC48 FAIL - Thông báo không đúng mong đợi\n"
+                    f"Expected: {expected_msg}\n"
+                    f"Actual: {actual_msg}"
+                )
+
+            print("TC48 PASS - Hiển thị đúng thông báo vượt quá ký tự")
+
+        except:
+            pytest.fail(
+                "TC48 FAIL - Hệ thống KHÔNG hiển thị thông báo lỗi "
+                "khi tên danh mục vượt quá độ dài cho phép"
+            )
 
 # =======================
 # TC49: Tên danh mục có emoji
@@ -701,48 +730,76 @@ class TestTC53:
     def teardown_method(self, method):
         self.driver.quit()
     def test_tC53(self):
-        # ===== TEST TC53: Sửa danh mục với tên trống =====
+        # ======================
+        # TC53: Sửa danh mục với tên trống
+        # ======================
+
         self.driver.get("http://hauiproj.somee.com/Admin/Quanlydanhmuc.aspx")
         time.sleep(1)
 
-        menu = self.wait.until(EC.presence_of_element_located((By.ID, "HyperLink5")))
-        self.driver.execute_script("arguments[0].click();", menu)
-        time.sleep(1)
-
+        # Click nút sửa (dòng 8)
         edit_btn = self.wait.until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".item-data:nth-child(8) .bt-style-chucnang:nth-child(1)")
+            EC.element_to_be_clickable(
+                (
+                    By.CSS_SELECTOR,
+                    ".item-data:nth-child(8) .bt-style-chucnang:nth-child(1)"
+                )
             )
         )
-        self.driver.execute_script("arguments[0].scrollIntoView(true);", edit_btn)
-        time.sleep(0.5)
-        self.driver.execute_script("arguments[0].click();", edit_btn)
+        self.driver.execute_script(
+            "arguments[0].scrollIntoView(true);", edit_btn
+        )
+        edit_btn.click()
         time.sleep(1)
 
+        # Nhập tên danh mục trống (space)
         name_input = self.wait.until(
             EC.presence_of_element_located(
                 (By.NAME, "ctl00$ContentPlaceHolder1$GridView1$ctl08$ctl01")
             )
         )
         name_input.clear()
-        time.sleep(0.5)
-        name_input.send_keys(" ")  # tên trống
+        name_input.send_keys(" ")
         time.sleep(1)
 
+        # Click cập nhật
         update_btn = self.wait.until(
-            EC.presence_of_element_located(
+            EC.element_to_be_clickable(
                 (By.NAME, "ctl00$ContentPlaceHolder1$GridView1$ctl08$ctl02")
             )
         )
-        self.driver.execute_script("arguments[0].click();", update_btn)
+        update_btn.click()
         time.sleep(1)
 
-        # VERIFY: hệ thống không validate → BUG
-        error_text = self.driver.find_element(By.ID, "ContentPlaceHolder1_lblTB").text
-        assert error_text == ""
+        # ======================
+        # KIỂM TRA KẾT QUẢ
+        # ======================
+        expected_msg = "Tên danh mục không hợp lệ"
+
+        try:
+            actual_msg = WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(
+                    (By.ID, "ContentPlaceHolder1_lblTB")
+                )
+            ).text.strip()
+
+            if expected_msg not in actual_msg:
+                pytest.fail(
+                    "TC53 FAIL - Thông báo không đúng mong đợi\n"
+                    f"Expected: {expected_msg}\n"
+                    f"Actual: {actual_msg}"
+                )
+
+            print("TC53 PASS - Hiển thị đúng thông báo khi tên danh mục trống")
+
+        except:
+            pytest.fail(
+                "TC53 FAIL - Hệ thống KHÔNG hiển thị thông báo lỗi "
+                "khi sửa danh mục với tên trống"
+            )
 
 # =======================
-# TC54: Sửa tên danh mục trống
+# TC54: Sửa tên danh mục > 50 ký tự
 # =======================
 class TestTC54:
     def setup_method(self, method):
@@ -751,47 +808,36 @@ class TestTC54:
         login(self.driver, self.wait)
     def teardown_method(self, method):
         self.driver.quit()
-    def test_tC54(self):
-        self.driver.get("http://hauiproj.somee.com/Admin/Default.aspx")
-        time.sleep(1)
+    # ======================
+        # KIỂM TRA KẾT QUẢ
+        # ======================
+        expected_msg = "Số từ vượt quá ký tự"
 
-        link = self.wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "#HyperLink5 > li"))
-        )
-        self.driver.execute_script("arguments[0].click();", link)
-        time.sleep(1)
+        try:
+            actual_msg = WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(
+                    (By.ID, "ContentPlaceHolder1_lblTB")
+                )
+            ).text.strip()
 
-        edit_btn = self.wait.until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".item-data:nth-child(7) .bt-style-chucnang:nth-child(1)")
+            if expected_msg not in actual_msg:
+                pytest.fail(
+                    "TC54 FAIL - Thông báo không đúng mong đợi\n"
+                    f"Expected: {expected_msg}\n"
+                    f"Actual: {actual_msg}"
+                )
+
+            print("TC54 PASS - Hiển thị đúng thông báo vượt quá ký tự")
+
+        except:
+            pytest.fail(
+                "TC54 FAIL - Hệ thống KHÔNG hiển thị thông báo lỗi "
+                "khi sửa danh mục với tên vượt quá độ dài cho phép"
             )
-        )
-        self.driver.execute_script("arguments[0].click();", edit_btn)
-        time.sleep(1)
 
-        input_desc = self.wait.until(
-            EC.presence_of_element_located(
-                (By.NAME, "ctl00$ContentPlaceHolder1$GridView1$ctl07$ctl01")
-            )
-        )
-        input_desc.send_keys(
-            "Danh mục tổng hợp các bài viết hướng dẫn lập trình và phân tích dữ liệu nâng cao"
-        )
-        time.sleep(1)
-
-        self.driver.find_element(
-            By.NAME, "ctl00$ContentPlaceHolder1$GridView1$ctl07$ctl02"
-        ).click()
-        time.sleep(1)
-
-        error = self.wait.until(
-            EC.presence_of_element_located((By.ID, "ContentPlaceHolder1_lblTB"))
-        ).text
-
-        assert "String or binary data would be truncated" in error
 
 # =======================
-# TC55: Sửa tên danh mục trống
+# TC55: Sửa tên danh mục chứa ký tự đặc biệt
 # =======================
 class TestTC55:
     def setup_method(self, method):
@@ -837,7 +883,7 @@ class TestTC55:
         assert True
 
 # =======================
-# TC56: Sửa tên danh mục trống
+# TC56: Sửa tên danh mục chứa emoji
 # =======================
 class TestTC56:
     def setup_method(self, method):
@@ -881,7 +927,7 @@ class TestTC56:
         assert True    
 
 # =======================
-# TC57: Sửa tên danh mục trống
+# TC57: Sửa tên danh mục trùng
 # =======================
 class TestTC57:
     def setup_method(self, method):
@@ -891,44 +937,78 @@ class TestTC57:
     def teardown_method(self, method):
         self.driver.quit()
     def test_tC57(self):
+        # ======================
+        # TC57: Cập nhật danh mục trùng tên
+        # ======================
+
+        # Mở trang quản lý danh mục
         self.driver.get("http://hauiproj.somee.com/Admin/Quanlydanhmuc.aspx")
         time.sleep(1)
 
-        menu = self.wait.until(EC.presence_of_element_located((By.ID, "HyperLink5")))
-        self.driver.execute_script("arguments[0].click();", menu)
-        time.sleep(1)
-
+        # Click nút sửa của 1 danh mục (ví dụ dòng 10)
         edit_btn = self.wait.until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".item-data:nth-child(10) .bt-style-chucnang:nth-child(1)")
+            EC.element_to_be_clickable(
+                (
+                    By.CSS_SELECTOR,
+                    ".item-data:nth-child(10) .bt-style-chucnang:nth-child(1)"
+                )
             )
         )
-        self.driver.execute_script("arguments[0].scrollIntoView(true);", edit_btn)
-        self.driver.execute_script("arguments[0].click();", edit_btn)
+        self.driver.execute_script(
+            "arguments[0].scrollIntoView(true);", edit_btn
+        )
+        edit_btn.click()
         time.sleep(1)
 
-        name_input = self.wait.until(
+        # Nhập tên danh mục bị trùng
+        txt_name = self.wait.until(
             EC.presence_of_element_located(
                 (By.NAME, "ctl00$ContentPlaceHolder1$GridView1$ctl10$ctl01")
             )
         )
-        name_input.clear()
-        name_input.send_keys("Kính râm")
+        txt_name.clear()
+        txt_name.send_keys("Kính râm")
         time.sleep(1)
 
+        # Click cập nhật
         update_btn = self.wait.until(
-            EC.presence_of_element_located(
+            EC.element_to_be_clickable(
                 (By.NAME, "ctl00$ContentPlaceHolder1$GridView1$ctl10$ctl02")
             )
         )
-        self.driver.execute_script("arguments[0].click();", update_btn)
+        update_btn.click()
         time.sleep(1)
 
-        assert True
+        # ======================
+        # KIỂM TRA KẾT QUẢ
+        # ======================
+        expected_msg = "Tên danh mục đã được sử dụng"
+
+        try:
+            actual_msg = WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(
+                    (By.ID, "ContentPlaceHolder1_lblTB")
+                )
+            ).text.strip()
+
+            if expected_msg not in actual_msg:
+                pytest.fail(
+                    "TC57 FAIL - Thông báo không đúng mong đợi\n"
+                    f"Expected: {expected_msg}\n"
+                    f"Actual: {actual_msg}"
+                )
+
+            print("TC57 PASS - Hiển thị đúng thông báo trùng danh mục")
+
+        except:
+            pytest.fail(
+                "TC57 FAIL - Hệ thống KHÔNG hiển thị thông báo lỗi "
+                "khi cập nhật danh mục trùng tên"
+            )
 
 
 # =======================
-# TC58: Sửa tên danh mục trống
+# TC58: Xóa tên danh mục 
 # =======================
 class TestTC58:
     def setup_method(self, method):
