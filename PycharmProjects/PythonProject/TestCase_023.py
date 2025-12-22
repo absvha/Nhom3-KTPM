@@ -34,7 +34,7 @@ class TestTC023():
         # Nhập tên tài khoản (gõ chậm để dễ quan sát)
         self.slow_send_keys(
             self.driver.find_element(By.ID, "ContentPlaceHolder1_txtTaiKhoan"),
-            "HaiYen15s"
+            "HaiYen15s21"
         )
 
         # Nhập mật khẩu

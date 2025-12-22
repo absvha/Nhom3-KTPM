@@ -10,7 +10,7 @@ class TestTC033():
         self.driver.implicitly_wait(10)
 
     def teardown_method(self, method):
-        time.sleep(3)
+        time.sleep(5)
         self.driver.quit()
 
     # Hàm gõ chậm để demo rõ cho giảng viên
