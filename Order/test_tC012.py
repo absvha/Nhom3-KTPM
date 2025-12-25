@@ -20,7 +20,7 @@ class TestTC012():
 
         # 1. Mở trang giỏ hàng
         self.driver.get("http://hauiproj.somee.com/Giohang.aspx")
-        self.driver.set_window_size(1251, 655)
+        self.driver.set_window_size(1200, 650)
         time.sleep(1)
 
         # 2. Click menu Sản phẩm
